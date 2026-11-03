@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Codex Context Bridge</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+<main>
+  <header><span class="eyebrow">LOCAL · RESPONSES API</span><span id="state" class="badge">正在连接</span></header>
+  <h1>让上下文顺利抵达。</h1>
+  <p class="intro">清理不兼容的推理历史和历史项标识，连接你的 Codex 客户端与 API 服务。</p>
+  <section class="panel">
+    <h2>连接设置</h2>
+    <form id="config-form">
+      <label for="upstream">上游 API 地址</label>
+      <input id="upstream" type="url" placeholder="https://api.example.com/v1" required autocomplete="off">
+      <p class="hint">填写实际服务的 Base URL。API Key 继续保存在客户端中。</p>
+      <label for="port">本机代理端口</label>
+      <input id="port" type="number" min="1" max="65535" required>
+      <details id="advanced">
+        <summary>高级设置</summary>
+        <label for="timeout">网络等待超时（秒）</label>
+        <input id="timeout" type="number" min="1" max="3600" step="any" required>
+        <label class="checkbox"><input id="history" type="checkbox">允许移除历史响应 ID</label>
+        <p class="hint">只有确认客户端每次发送完整聊天历史时才开启，否则可能丢失上下文。</p>
+      </details>
+      <div class="actions"><button id="save" type="submit">保存设置</button><button id="toggle" class="secondary" type="button">启动代理</button></div>
+      <p id="feedback" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <section class="panel connection">
+    <h2>客户端连接</h2><p class="hint">在客户端选择 Responses 协议，填入下方地址和原来的 API Key，再新开会话。</p>
+    <div class="copy-row"><code id="url">—</code><button id="copy" class="secondary" type="button">复制地址</button></div>
+    <div class="metrics"><div><strong id="requests">0</strong><span>已接收请求</span></div><div><strong id="reasoning">0</strong><span>已移除推理项</span></div><div><strong id="ids">0</strong><span>已移除历史 ID</span></div></div>
+    <p class="hint" id="active">代理未启动。</p>
+  </section>
+  <footer>第三方工具 · 仅监听本机 · 不保存密钥或聊天正文<p>清理推理历史会影响推理连续性。加密压缩历史和远端引用无法还原。</p><small id="version"></small></footer>
+</main>
+</body></html>

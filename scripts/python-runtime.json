@@ -1,0 +1,14 @@
+{
+  "x64": {
+    "url": "https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-amd64.zip",
+    "sha256": "f6cca216a359be84797cabb54149ce5e062afb16cc7567eb7fc51cacb2d86b65"
+  },
+  "x86": {
+    "url": "https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-win32.zip",
+    "sha256": "19248889d63e1599bc6ae132a40a737d9143e4917d79156e157418f5efc50019"
+  },
+  "arm64": {
+    "url": "https://www.python.org/ftp/python/3.13.7/python-3.13.7-embed-arm64.zip",
+    "sha256": "2ddcf25e71f7205e652ebb57439f22fd2bab37d7f5c9152dbe32867bf2c77a50"
+  }
+}

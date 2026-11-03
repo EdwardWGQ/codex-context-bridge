@@ -1,0 +1,6 @@
+{
+  "upstream_url": "",
+  "port": 8787,
+  "timeout_seconds": 600,
+  "allow_response_link_removal": false
+}
