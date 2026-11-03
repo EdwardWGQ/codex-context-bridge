@@ -1,4 +1,4 @@
-﻿param([switch]$Stop, [switch]$NoBrowser)
+﻿param([switch]$Stop, [switch]$Settings, [switch]$NoBrowser, [switch]$Notify)
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $bridgeRoot = Split-Path $PSScriptRoot -Parent
@@ -85,10 +85,16 @@ try {
             if ((Invoke-BridgeCommand $bridgePython '--stop') -ne 0) { throw '服务未运行或停止失败。若有请求正在处理，请等回复结束后重试。' }
             Write-Host '服务已停止。'
         } else {
+            if (-not $Settings) {
+                & $bridgePython -X utf8 -m bridge --configure
+                if ($LASTEXITCODE -ne 0) { throw '配置未完成，请检查上方提示后重新启动。' }
+            }
             $bridgeAlreadyRunning = $false
             if ((Invoke-BridgeCommand $bridgePython '--status') -eq 0) { $bridgeAlreadyRunning = $true }
             if (-not $bridgeAlreadyRunning) {
-                Start-Process -FilePath $bridgePython -ArgumentList @('-X', 'utf8', '-m', 'bridge', '--no-browser') -WorkingDirectory $bridgeRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $bridgeState 'stdout.log') -RedirectStandardError (Join-Path $bridgeState 'stderr.log') | Out-Null
+                $bridgeArguments = @('-X', 'utf8', '-m', 'bridge', '--no-browser')
+                if (-not $Settings) { $bridgeArguments += '--start-proxy' }
+                Start-Process -FilePath $bridgePython -ArgumentList $bridgeArguments -WorkingDirectory $bridgeRoot -WindowStyle Hidden -RedirectStandardOutput (Join-Path $bridgeState 'stdout.log') -RedirectStandardError (Join-Path $bridgeState 'stderr.log') | Out-Null
             }
             $bridgeReady = $false
             for ($bridgeAttempt = 0; $bridgeAttempt -lt 40; $bridgeAttempt++) {
@@ -96,12 +102,20 @@ try {
                 Start-Sleep -Milliseconds 200
             }
             if (-not $bridgeReady) { throw '服务启动失败，请查看 .runtime/stderr.log。' }
-            if (-not $NoBrowser) {
+            if (-not $Settings) {
+                if ((Invoke-BridgeCommand $bridgePython '--start-running') -ne 0) { throw '代理启动失败，请检查上游配置和端口占用；也可使用 settings.cmd 修改设置。' }
+                $bridgeConfig = Get-Content -LiteralPath (Join-Path $bridgeRoot 'config.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+                Write-Host ("代理已启动：http://127.0.0.1:" + $bridgeConfig.port + '/v1') -ForegroundColor Green
+            } elseif (-not $NoBrowser) {
                 if ((Invoke-BridgeCommand $bridgePython '--open-running') -ne 0) { throw '无法打开浏览器，请检查系统默认浏览器。' }
                 Write-Host '设置页已打开。保存上游地址后，在页面点击“启动代理”。'
             } else { Write-Host '本机设置服务已就绪。' }
         }
     } finally { Pop-Location }
+    if ($Notify) {
+        Write-Host '完成，窗口将在 2 秒后关闭。'
+        Start-Sleep -Seconds 2
+    }
 } catch {
     Write-Host $_.Exception.Message -ForegroundColor Red
     exit 1

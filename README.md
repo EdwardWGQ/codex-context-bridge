@@ -34,14 +34,15 @@ Context Bridge：清理 outgoing input
 
 1. 从 [Releases](https://github.com/EdwardWGQ/codex-context-bridge/releases) 下载并完整解压源码包，或克隆本仓库。
 2. 双击 `start.cmd`。优先使用已有 Python 3.10+；没有时，从 python.org 下载并校验独立 Python（x64 / x86 / ARM64），安装到项目 `.runtime`，无需管理员权限。
-3. 浏览器打开本机设置页，填写上游地址，例如 `https://api.openai.com/v1` 或你实际使用的中转服务 Base URL。
-4. 保存设置并点击“启动代理”。
-5. 在客户端中选择 **Responses** 协议，设置地址为 `http://127.0.0.1:8787/v1`，API Key 仍填写原上游 Key。
-6. **新开会话**，通过实际聊天验证连接。
+3. 首次没有配置时，在终端填写上游 API Base URL 和本机端口（回车使用默认 8787）。配置保存后会直接启动代理。
+4. 以后双击 `start.cmd` 会按已保存配置直接后台启动；成功提示显示后约 2 秒自动关闭窗口，不打开浏览器，也不需要再点击“启动”。已有服务但代理停止时，也会直接启动代理；重复启动不创建第二个服务。
+5. 在客户端中选择 **Responses** 协议，设置地址为 `http://127.0.0.1:8787/v1`，API Key 仍填写原上游 Key。**新开会话**，通过实际聊天验证连接。
 
-启动入口打开的是设置页；代理需要在设置页启动。代理默认端口 8787，设置服务使用独立的随机本机端口。重复双击启动入口会回到已有设置服务。
+`start.cmd` 用于直接启动，`stop.cmd` 用于停止，`settings.cmd` 用于单独打开网页设置，修改配置或查看清洗计数。网页设置是可选入口。代理默认端口 8787，设置服务使用独立的随机本机端口。
 
 关闭浏览器不会停止后台服务。页面“停止代理”保留设置服务；双击 `stop.cmd` 会关闭代理和设置服务。仍有请求进行时，普通停止或配置变更会被拒绝，以免中断回复。
+
+启动失败时窗口保留错误提示。成功后显示提示的 2 秒不包含首次 Python 下载、安装或用户输入配置的时间。
 
 ### macOS / Linux / 已有 Python 的 Windows
 
@@ -66,7 +67,7 @@ python3 -m bridge --stop
 
 ## 配置
 
-初次启动无需创建 `config.json`；保存设置后会自动生成。也可复制 `config.example.json` 为 `config.json` 并编辑。
+初次启动无需创建 `config.json`；终端首次配置或网页保存设置会自动生成。也可复制 `config.example.json` 为 `config.json` 并编辑。已经使用 v0.1.1 的用户，请先停止旧服务，将旧 `config.json` 复制到新版目录，然后双击新版 `start.cmd`。
 
 ```json
 {

@@ -50,18 +50,37 @@ def contact(state_file, operation="state"):
         state = json.loads(response.read(65536))
         if response.status != 200 or state.get("service") != "codex-context-bridge" or state.get("pid") != record["pid"]:
             raise ValueError("本机服务身份校验失败。")
-        if operation == "shutdown":
-            connection.request("POST", "/api/shutdown", body=b"{}", headers=headers | {"Content-Type": "application/json"})
+        if operation in {"shutdown", "start"}:
+            route = "/api/shutdown" if operation == "shutdown" else "/api/start"
+            connection.request("POST", route, body=b"{}", headers=headers | {"Content-Type": "application/json"})
             response = connection.getresponse()
             result = json.loads(response.read(65536))
             if response.status != 200:
-                raise ValueError(result.get("error", "服务无法停止。"))
+                raise ValueError(result.get("error", "服务操作失败。"))
+            state = result
         elif operation == "open":
             if not webbrowser.open(record["origin"] + "/#" + record["token"]):
                 raise ValueError("系统浏览器无法打开。")
         return state
     finally:
         connection.close()
+
+
+def configure_terminal(path):
+    """Ask once for missing settings; never open a browser from the start entry."""
+    settings = config.read(path)
+    try:
+        config.validate(settings, require_upstream=True)
+        return settings
+    except ValueError:
+        print("首次使用，请填写代理配置。API Key 继续填写在客户端中。")
+    upstream = input("上游 API Base URL（例如 https://api.example.com/v1）：").strip()
+    port = input(f"本机端口 [默认 {settings['port']}]：").strip()
+    settings = config.validate(settings | {"upstream_url": upstream,
+                                         "port": int(port) if port else settings["port"]}, require_upstream=True)
+    config.write(path, settings)
+    print("配置已保存，以后双击 start.cmd 会直接启动代理。")
+    return settings
 
 
 def main(argv=None):
@@ -79,13 +98,23 @@ def main(argv=None):
     commands.add_argument("--status", action="store_true")
     commands.add_argument("--stop", action="store_true")
     commands.add_argument("--open-running", action="store_true")
+    commands.add_argument("--start-running", action="store_true")
+    commands.add_argument("--configure", action="store_true", help="在终端补全首次使用的配置，不打开浏览器")
     args = parser.parse_args(argv)
+    if args.configure:
+        try:
+            configure_terminal(args.config)
+            return 0
+        except (OSError, ValueError, EOFError) as failure:
+            print("配置失败：" + str(failure), file=sys.stderr)
+            return 1
     os.umask(0o077)
     args.state_dir.mkdir(parents=True, exist_ok=True)
     state_file = args.state_dir / "service.json"
-    if args.status or args.stop or args.open_running:
+    if args.status or args.stop or args.open_running or args.start_running:
         try:
-            state = contact(state_file, "shutdown" if args.stop else "open" if args.open_running else "state")
+            operation = "shutdown" if args.stop else "open" if args.open_running else "start" if args.start_running else "state"
+            state = contact(state_file, operation)
             print("服务已停止。" if args.stop else json.dumps(state, ensure_ascii=False))
             return 0
         except (OSError, ValueError, KeyError, http.client.HTTPException) as failure:
@@ -94,7 +123,12 @@ def main(argv=None):
     lock = instance_lock(args.state_dir / "service.lock")
     if lock is None:
         try:
-            contact(state_file, "state" if args.no_browser else "open")
+            if args.start_proxy:
+                contact(state_file, "start")
+            if not args.no_browser:
+                contact(state_file, "open")
+            else:
+                contact(state_file)
             print("服务已在运行。")
             return 0
         except (OSError, ValueError, KeyError, http.client.HTTPException):

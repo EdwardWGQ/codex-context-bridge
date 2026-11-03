@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from bridge import __version__
 OUTPUT = ROOT / "dist" / f"codex-context-bridge-{__version__}.zip"
-FILES = ["README.md", "LICENSE", "config.example.json", "start.cmd", "stop.cmd",
+FILES = ["README.md", "CHANGELOG.md", "LICENSE", "config.example.json", "start.cmd", "stop.cmd", "settings.cmd",
          "scripts/launch.ps1", "scripts/python-runtime.json", "tools/package.py", "docs/settings.png"]
 FILES += [str(path.relative_to(ROOT)) for path in (ROOT / "bridge").rglob("*")
           if path.is_file() and "__pycache__" not in path.parts and path.suffix in {".py", ".html", ".css", ".js"}]
