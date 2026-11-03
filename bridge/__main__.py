@@ -65,6 +65,11 @@ def contact(state_file, operation="state"):
 
 
 def main(argv=None):
+    # Windows redirected consoles may use a legacy code page. Keep Chinese CLI
+    # output from aborting an otherwise healthy background service.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     parser = argparse.ArgumentParser(description="Codex Context Bridge：本机上下文兼容代理")
     parser.add_argument("--config", type=Path, default=ROOT / "config.json")
     parser.add_argument("--state-dir", type=Path, default=ROOT / ".runtime")

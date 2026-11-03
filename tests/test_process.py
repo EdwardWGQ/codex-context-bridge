@@ -13,11 +13,12 @@ ROOT = Path(__file__).resolve().parent.parent
 class ProcessTests(unittest.TestCase):
     def test_headless_start_duplicate_instance_and_authenticated_shutdown(self):
         flags = {"creationflags": subprocess.CREATE_NO_WINDOW} if os.name == "nt" else {}
+        environment = os.environ | {"PYTHONIOENCODING": "ascii"}
         with tempfile.TemporaryDirectory() as directory:
             state_dir = Path(directory) / "state"
             command = [sys.executable, "-m", "bridge", "--state-dir", str(state_dir)]
             process = subprocess.Popen(command + ["--config", str(Path(directory) / "config.json"), "--no-browser"],
-                                       cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **flags)
+                                       cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment, **flags)
             try:
                 for _ in range(100):
                     if (state_dir / "service.json").exists():
@@ -26,7 +27,7 @@ class ProcessTests(unittest.TestCase):
                         self.fail(process.communicate()[1].decode(errors="replace"))
                     time.sleep(.05)
                 self.assertTrue((state_dir / "service.json").exists())
-                status = subprocess.run(command + ["--status"], cwd=ROOT, capture_output=True, timeout=10, **flags)
+                status = subprocess.run(command + ["--status"], cwd=ROOT, capture_output=True, timeout=10, env=environment, **flags)
                 self.assertEqual(status.returncode, 0, status.stderr)
                 self.assertFalse(json.loads(status.stdout)["running"])
                 duplicate = subprocess.run(command + ["--no-browser"], cwd=ROOT, capture_output=True, timeout=10, **flags)

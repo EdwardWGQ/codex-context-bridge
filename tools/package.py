@@ -2,9 +2,12 @@
 
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
+import sys
 
 ROOT = Path(__file__).resolve().parent.parent
-OUTPUT = ROOT / "dist" / "codex-context-bridge-0.1.0.zip"
+sys.path.insert(0, str(ROOT))
+from bridge import __version__
+OUTPUT = ROOT / "dist" / f"codex-context-bridge-{__version__}.zip"
 FILES = ["README.md", "LICENSE", "config.example.json", "start.cmd", "stop.cmd",
          "scripts/launch.ps1", "scripts/python-runtime.json", "tools/package.py", "docs/settings.png"]
 FILES += [str(path.relative_to(ROOT)) for path in (ROOT / "bridge").rglob("*")
